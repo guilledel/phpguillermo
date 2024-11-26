@@ -15,64 +15,72 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            background: linear-gradient(to right, #ff7e5f, #feb47b); /* Fondo degradado */
         }
 
         .form-container {
             background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 40px;
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             text-align: center;
+            animation: popUp 0.8s ease-out;
         }
 
         h2 {
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 20px;
             color: #333;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
         }
 
         /* Estilo para las etiquetas */
         label {
-            font-size: 16px;
+            font-size: 18px;
             color: #555;
             margin-bottom: 8px;
             display: inline-block;
+            font-weight: bold;
         }
 
         /* Estilo para los campos de entrada */
         input[type="text"], input[type="email"], input[type="password"] {
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
             box-sizing: border-box;
             font-size: 16px;
             transition: border-color 0.3s ease;
+            background-color: #f9f9f9;
         }
 
         input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
-            border-color: #4CAF50;
+            border-color: #ff7e5f;
             outline: none;
+            background-color: #fff;
         }
 
         /* Estilo para el botón de submit */
         button[type="submit"] {
             width: 100%;
-            padding: 14px;
-            background-color: #4CAF50;
+            padding: 16px;
+            background-color: #ff7e5f;
             color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 18px;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
 
         button[type="submit"]:hover {
-            background-color: #45a049;
+            background-color: #feb47b;
         }
 
         /* Estilo para los mensajes de error o alerta */
@@ -85,13 +93,27 @@
         /* Estilo para los enlaces */
         .login-link {
             display: block;
-            margin-top: 10px;
-            color: #555;
+            margin-top: 20px;
+            color: #ff7e5f;
             text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
         }
 
         .login-link:hover {
-            color: #4CAF50;
+            color: #feb47b;
+        }
+
+        /* Animación del formulario */
+        @keyframes popUp {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
     </style>
     <script>
@@ -138,7 +160,7 @@
         </form>
 
         <!-- Enlace para iniciar sesión si ya tiene una cuenta -->
-        <a href="login.php" class="login-link">¿Ya tienes cuenta? Inicia sesión</a>
+        <a href="iniciarsesion.html" class="login-link">¿Ya tienes cuenta? Inicia sesión</a>
     </div>
 </body>
 </html>

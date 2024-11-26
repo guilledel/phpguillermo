@@ -5,10 +5,12 @@ $database = "cafeteria_db";
 $username = "guillermo";
 $password = "guillermo";
 
-$conn = mysqli_connect($servername, $username, $password, $database);
+// Usando mysqli orientado a objetos
+$conn = new mysqli($servername, $username, $password, $database);
 
-if (!$conn) {
-    die("Conexión fallida: " . mysqli_connect_error());
+// Verificar conexión
+if ($conn->connect_error) {
+    die("Conexión fallida: " . $conn->connect_error);
 }
 
 // Verificar si el formulario fue enviado
@@ -20,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Verificar que las contraseñas coincidan
     if ($pass !== $confirm_pass) {
-        echo 'Las contraseñas no coinciden.';
+        echo '<script>alert("Las contraseñas no coinciden."); window.location.href="registro.html";</script>';
         exit;
     }
 
@@ -34,18 +36,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
 
     if ($count > 0) {
-        echo 'El correo electrónico ya está registrado.';
+        echo '<script>alert("El correo electrónico ya está registrado."); window.location.href="registro.html";</script>';
         exit;
     }
 
-    // Hash de la contraseña
+    // Hashear la contraseña con PASSWORD_DEFAULT
     $hashed_pass = password_hash($pass, PASSWORD_DEFAULT);
 
     // Insertar el usuario en la base de datos
     $query = "INSERT INTO users (nombreUsuario, correoUsuario, contraseñaUsuario) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("sss", $user, $email, $hashed_pass);
-    
+
     if ($stmt->execute()) {
         echo 'Usuario registrado correctamente.';
     } else {
@@ -55,5 +57,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Cerrar la conexión
-mysqli_close($conn);
+$conn->close();
 ?>
