@@ -43,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo '<script>alert("Contraseña incorrecta."); window.location.href="iniciarsesion.html";</script>';
         }
     } else {
-        // Si no se encuentra el correo en la base de datos
-        echo '<script>alert("Correo electrónico no registrado."); window.location.href="iniciarsesion.html";</script>';
+        // Si no se encuentra el correo en la base de datos, redirigir a formulario.html
+        echo '<script>alert("Correo electrónico no registrado. Redirigiendo a registro."); window.location.href="formulario.html";</script>';
     }
 
     $stmt->close();
