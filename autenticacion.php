@@ -1,15 +1,19 @@
 <?php
-// auth.php
+// Verificar si la sesión ya está iniciada
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();  // Iniciar la sesión si no está activa
+}
+require_once 'db.php';  // Archivo de conexión a la base de datos
 
-function verificar_autenticacion() {
-    // Iniciar sesión
-    session_start();
-    
-    // Verificar si el usuario está autenticado
+function verificar_autenticacion($role_required = null) {
     if (!isset($_SESSION['user_id'])) {
-        // Si no está autenticado, redirigir al formulario de inicio de sesión
         header("Location: iniciarsesion.php");
-        exit; // Detener la ejecución del código
+        exit;
+    }
+
+    if ($role_required && $_SESSION['role'] !== $role_required) {
+        header("Location: acceso_denegado.php");
+        exit;
     }
 }
 ?>
