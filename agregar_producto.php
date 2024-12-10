@@ -18,16 +18,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Insertar el producto en la base de datos utilizando PDO
         try {
-            $query = "INSERT INTO products (nombreProducto, precioProducto, cantidadProducto) VALUES (:nombreProducto, :precioProducto, :cantidadProducto)";
+            $query = "INSERT INTO products (nombreProducto, precioProducto, cantidadProducto) 
+                      VALUES (:nombreProducto, :precioProducto, :cantidadProducto)";
+            
+            // Preparar la consulta
             $stmt = $conn->prepare($query);
+            
+            // Vincular parámetros
             $stmt->bindParam(':nombreProducto', $nombreProducto);
             $stmt->bindParam(':precioProducto', $precioProducto);
             $stmt->bindParam(':cantidadProducto', $cantidadProducto);
-
+            
             // Ejecutar la consulta
             $stmt->execute();
 
-            // Redirigir al listado de productos
+            // Redirigir al listado de productos si la inserción es exitosa
             header("Location: listado_productos.php");
             exit;
         } catch (PDOException $e) {
@@ -49,10 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="POST">
         <label for="nombreProducto">Nombre del Producto:</label><br>
         <input type="text" id="nombreProducto" name="nombreProducto" required><br><br>
+        
         <label for="precioProducto">Precio:</label><br>
         <input type="number" id="precioProducto" name="precioProducto" required step="0.01"><br><br>
+        
         <label for="cantidadProducto">Cantidad:</label><br>
         <input type="number" id="cantidadProducto" name="cantidadProducto" required><br><br>
+        
         <button type="submit">Agregar Producto</button>
     </form>
 </body>
