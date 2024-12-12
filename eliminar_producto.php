@@ -1,27 +1,27 @@
 <?php
 session_start();
-require_once 'db.php';  // Archivo de conexión a la base de datos
-require_once 'autenticacion.php';  // Archivo para verificar autenticación
+require_once 'db.php';
+require_once 'autenticacion.php';
 
 // Verificar si el usuario está autenticado
 verificar_autenticacion();
 
-// Verificar si el ID del producto está presente en la URL
-if (isset($_GET['id'])) {
-    $idProducto = $_GET['id'];
-
-    // Eliminar el producto de la base de datos
-    $query = "DELETE FROM products WHERE idProducto = ?";
-    $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "i", $idProducto);
-    mysqli_stmt_execute($stmt);
-
-    // Redirigir al listado de productos
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: listado_productos.php");
     exit;
-} else {
-    // Si no se pasa el ID del producto, redirigir
+}
+
+$idProducto = $_GET['id'];
+
+try {
+    $query = "DELETE FROM products WHERE idProducto = :idProducto";
+    $stmt = $conn->prepare($query);
+    $stmt->bindParam(':idProducto', $idProducto);
+    $stmt->execute();
+
     header("Location: listado_productos.php");
     exit;
+} catch (PDOException $e) {
+    echo "Error: " . $e->getMessage();
 }
 ?>

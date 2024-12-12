@@ -1,38 +1,49 @@
 <?php
 session_start();
-require_once 'db.php';  // Archivo de conexión a la base de datos
-require_once 'autenticacion.php';  // Archivo para verificar autenticación
+require_once 'db.php'; // Archivo de conexión a la base de datos
+require_once 'autenticacion.php'; // Archivo para verificar autenticación
 
 // Verificar si el usuario está autenticado
 verificar_autenticacion();
 
+// Lógica para manejar la solicitud POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Obtener los datos del formulario
-    $nombreProducto = $_POST['nombreProducto'];
+    $nombreProducto = trim($_POST['nombreProducto']);
+    $descripcionProducto = trim($_POST['descripcionProducto']);
     $precioProducto = $_POST['precioProducto'];
-    $cantidadProducto = $_POST['cantidadProducto'];
+    $stockProducto = $_POST['stockProducto'];
 
-    // Validar datos (aquí puedes agregar más validaciones)
-    if (empty($nombreProducto) || empty($precioProducto) || empty($cantidadProducto)) {
-        echo "Todos los campos son obligatorios.";
-    } else {
-        // Insertar el producto en la base de datos utilizando PDO
+    // Validar la entrada de datos
+    $errores = [];
+    if (empty($nombreProducto)) {
+        $errores[] = "El nombre del producto es obligatorio.";
+    }
+    if (empty($descripcionProducto)) {
+        $errores[] = "La descripción del producto es obligatoria.";
+    }
+    if (!is_numeric($precioProducto) || $precioProducto <= 0) {
+        $errores[] = "El precio debe ser un número positivo.";
+    }
+    if (!filter_var($stockProducto, FILTER_VALIDATE_INT) || $stockProducto < 0) {
+        $errores[] = "El stock debe ser un número entero no negativo.";
+    }
+
+    // Si no hay errores, procesar los datos
+    if (empty($errores)) {
         try {
-            $query = "INSERT INTO products (nombreProducto, precioProducto, cantidadProducto) 
-                      VALUES (:nombreProducto, :precioProducto, :cantidadProducto)";
-            
-            // Preparar la consulta
+            $query = "INSERT INTO products (nombreProducto, descripcionProducto, precioProducto, cantidadProducto) 
+                      VALUES (:nombreProducto, :descripcionProducto, :precioProducto, :stockProducto)";
             $stmt = $conn->prepare($query);
-            
-            // Vincular parámetros
+
             $stmt->bindParam(':nombreProducto', $nombreProducto);
+            $stmt->bindParam(':descripcionProducto', $descripcionProducto);
             $stmt->bindParam(':precioProducto', $precioProducto);
-            $stmt->bindParam(':cantidadProducto', $cantidadProducto);
-            
-            // Ejecutar la consulta
+            $stmt->bindParam(':stockProducto', $stockProducto);
+
             $stmt->execute();
 
-            // Redirigir al listado de productos si la inserción es exitosa
+            // Redirigir al listado de productos
             header("Location: listado_productos.php");
             exit;
         } catch (PDOException $e) {
@@ -48,19 +59,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agregar Producto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .errores {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
     <h1>Agregar Nuevo Producto</h1>
+    
+    <?php if (!empty($errores)): ?>
+        <div class="errores">
+            <ul>
+                <?php foreach ($errores as $error): ?>
+                    <li><?php echo htmlspecialchars($error); ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
     <form method="POST">
-        <label for="nombreProducto">Nombre del Producto:</label><br>
-        <input type="text" id="nombreProducto" name="nombreProducto" required><br><br>
-        
-        <label for="precioProducto">Precio:</label><br>
-        <input type="number" id="precioProducto" name="precioProducto" required step="0.01"><br><br>
-        
-        <label for="cantidadProducto">Cantidad:</label><br>
-        <input type="number" id="cantidadProducto" name="cantidadProducto" required><br><br>
-        
+        <label for="nombreProducto">Nombre del Producto:</label>
+        <input type="text" id="nombreProducto" name="nombreProducto" value="<?php echo htmlspecialchars($_POST['nombreProducto'] ?? ''); ?>" required>
+
+        <label for="descripcionProducto">Descripción del Producto:</label>
+        <textarea id="descripcionProducto" name="descripcionProducto" rows="4" required><?php echo htmlspecialchars($_POST['descripcionProducto'] ?? ''); ?></textarea>
+
+        <label for="precioProducto">Precio:</label>
+        <input type="number" id="precioProducto" name="precioProducto" step="0.01" value="<?php echo htmlspecialchars($_POST['precioProducto'] ?? ''); ?>" required>
+
+        <label for="stockProducto">Stock:</label>
+        <input type="number" id="stockProducto" name="stockProducto" value="<?php echo htmlspecialchars($_POST['stockProducto'] ?? ''); ?>" required>
+
         <button type="submit">Agregar Producto</button>
     </form>
 </body>

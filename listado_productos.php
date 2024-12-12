@@ -58,7 +58,7 @@ $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </style>
 </head>
 <body>
-    <h1>Listado de Productos</h1>
+    <h1>CRUD CAFETERIA</h1>
     <table>
         <thead>
             <tr>
