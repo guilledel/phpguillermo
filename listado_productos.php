@@ -8,7 +8,19 @@ require_once 'db.php';  // Archivo de conexión a la base de datos
 require_once 'autenticacion.php';  // Archivo para verificar autenticación
 
 // Verificar si el usuario está autenticado
-verificar_autenticacion();
+if (!isset($_SESSION['user_id'])) {
+    // Si la sesión no está activa, mostrar el mensaje de advertencia
+    echo '
+    <div style="text-align: center; color: white; font-size: 100px; font-weight: bold; background-color: red; padding: 50px; 
+    animation: shake 0.5s infinite; text-transform: uppercase; letter-spacing: 10px;">
+        no deberías estar aquí, se donde vives. corre.
+    </div>
+    <audio autoplay>
+        <source src="alerta.mp3" type="audio/mpeg">
+    </audio>';
+    header("refresh:3; url=iniciarsesion.html"); // Redirige después de 3 segundos
+    exit;
+}
 
 // Consulta para obtener todos los productos usando PDO
 $query = "SELECT idProducto, nombreProducto, precioProducto, cantidadProducto FROM products";
@@ -55,10 +67,40 @@ $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         .btn-danger {
             background-color: #dc3545;
         }
+        .nav-buttons {
+            margin-bottom: 20px;
+        }
+        .nav-buttons a {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+        .nav-buttons a:hover {
+            background-color: #0056b3;
+        }
+
+        /* Efecto shake para el mensaje */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(10px); }
+        }
     </style>
 </head>
 <body>
     <h1>CRUD CAFETERIA</h1>
+
+    <!-- Barra de navegación con botones -->
+    <div class="nav-buttons">
+        <a href="iniciarsesion.html">Iniciar sesión</a>
+        <a href="formulario.html">Registrarse</a>
+        <a href="cerrarsesion.php" class="btn btn-danger">Cerrar sesión</a>
+    </div>
+
     <table>
         <thead>
             <tr>

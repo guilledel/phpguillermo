@@ -115,7 +115,11 @@ $user_name = $_SESSION['user_name'];
     <div class="container">
         <h1>¡Bienvenido, <?php echo htmlspecialchars($user_name); ?>!</h1>
         <p>Has iniciado sesión correctamente.</p>
-        <a href="cerrarsesion.php">Cerrar sesión</a>
+
+        <!-- Botones de acción -->
+        <a href="listado_productos.php">Ir al listado de productos</a>
+        <br>
+        <a href="cerrarsesion.php" class="btn btn-danger">Cerrar sesión</a>
     </div>
 </body>
 </html>
