@@ -1,8 +1,8 @@
 <?php
 // Conexión a la base de datos
-$servername = "localhost";
-$database = "cafeteria_db";
-$username = "guillermo";
+$servername = "db";
+$database = "guillermo";
+$username = "root";
 $password = "guillermo";
 
 // Usando mysqli orientado a objetos
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Verificar que las contraseñas coincidan
     if ($pass !== $confirm_pass) {
-        echo '<script>alert("Las contraseñas no coinciden."); window.location.href="registro.html";</script>';
+        echo '<script>alert("Las contraseñas no coinciden."); window.location.href="index.html";</script>';
         exit;
     }
 
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
 
     if ($count > 0) {
-        echo '<script>alert("El correo electrónico ya está registrado."); window.location.href="registro.html";</script>';
+        echo '<script>alert("El correo electrónico ya está registrado."); window.location.href="index.html";</script>';
         exit;
     }
 
@@ -44,14 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $hashed_pass = password_hash($pass, PASSWORD_DEFAULT);
 
     // Insertar el usuario en la base de datos
-    $query = "INSERT INTO users (nombreUsuario, correoUsuario, contraseñaUsuario) VALUES (?, ?, ?)";
+    $query = "INSERT INTO users (nombreUsuario, correoUsuario, contrasenaUsuario) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("sss", $user, $email, $hashed_pass);
 
     if ($stmt->execute()) {
-        echo 'Usuario registrado correctamente.';
+        // Si se registra correctamente, redirigir al formulario de inicio de sesión
+        echo 'Usuario registrado correctamente.<br>';
+        echo '<a href="iniciarsesion.html"><button>Ir al inicio de sesión</button></a>';
     } else {
-        echo 'Error al registrar el usuario.';
+        // Si hay un error en el registro, volver al formulario de registro
+        echo 'Error al registrar el usuario. Por favor, intente nuevamente.<br>';
+        echo '<a href="index.html"><button>Volver al registro</button></a>';
     }
     $stmt->close();
 }

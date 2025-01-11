@@ -97,7 +97,7 @@ $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- Barra de navegación con botones -->
     <div class="nav-buttons">
         <a href="iniciarsesion.html">Iniciar sesión</a>
-        <a href="formulario.html">Registrarse</a>
+        <a href="index.html">Registrarse</a>
         <a href="cerrarsesion.php" class="btn btn-danger">Cerrar sesión</a>
     </div>
 

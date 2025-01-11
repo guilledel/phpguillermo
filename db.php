@@ -1,7 +1,7 @@
 <?php
-$servername = "localhost";
-$database = "cafeteria_db";
-$username = "guillermo";
+$servername = "db";
+$database = "guillermo";
+$username = "root";
 $password = "guillermo";
 
 // Crear la conexión PDO

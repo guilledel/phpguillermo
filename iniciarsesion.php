@@ -2,8 +2,8 @@
 session_start();
 
 // Conexión a la base de datos
-$servername = "localhost";
-$database = "cafeteria_db";
+$servername = "db";
+$database = "guillermo";
 $username = "guillermo";
 $password = "guillermo";
 
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pass = $_POST['password'];
 
     // Verificar si el correo electrónico existe en la base de datos
-    $query = "SELECT idUsuario, nombreUsuario, contraseñaUsuario FROM users WHERE correoUsuario = ?";
+    $query = "SELECT idUsuario, nombreUsuario, contrasenaUsuario FROM users WHERE correoUsuario = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } else {
         // Si no se encuentra el correo en la base de datos, redirigir a formulario.html
-        echo '<script>alert("Correo electrónico no registrado. Redirigiendo a registro."); window.location.href="formulario.html";</script>';
+        echo '<script>alert("Correo electrónico no registrado. Redirigiendo a registro."); window.location.href="index.html";</script>';
     }
 
     $stmt->close();
