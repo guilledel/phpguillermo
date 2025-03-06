@@ -1,1 +1,12 @@
-PHPSESSID=ea601e4395a00e2304962f8321fefbfb
+Fecha: 2025-03-06 17:00:56
+IP: 172.18.0.1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+Referer: http://localhost:8080/listado_productos.php
+Cookie: PHPSESSID=dfaa63f13c25061c6957a0bf74cd0569
+
+Fecha: 2025-03-06 17:00:56
+IP: 172.18.0.1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+Referer: http://localhost:8080/listado_productos.php
+Cookie: PHPSESSID=dfaa63f13c25061c6957a0bf74cd0569
+

