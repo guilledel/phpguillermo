@@ -1,264 +1,214 @@
-<?php
-// Iniciar sesión si no está ya activa
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-require_once 'db.php';  // Archivo de conexión a la base de datos
-require_once 'autenticacion.php';  // Archivo para verificar autenticación
-
-// Verificar si el usuario está autenticado
-if (!isset($_SESSION['user_id'])) {
-    // Si la sesión no está activa, mostrar el mensaje de advertencia
-    echo '
-    <div style="text-align: center; color: white; font-size: 100px; font-weight: bold; background-color: red; padding: 50px; 
-    animation: shake 0.5s infinite; text-transform: uppercase; letter-spacing: 10px;">
-        no deberías estar aquí, se donde vives. corre.
-    </div>
-    <audio autoplay>
-        <source src="alerta.mp3" type="audio/mpeg">
-    </audio>';
-    header("refresh:3; url=iniciarsesion.html"); // Redirige después de 3 segundos
-    exit;
-}
-
-// Inicializar variables
-$search_get = "";
-$search_post = "";
-$productos = [];
-
-// Procesar la búsqueda con GET (vulnerable a XSS)
-if (isset($_GET['search_get']) && $_GET['search_get'] !== "") {
-    $search_get = $_GET['search_get'];  // No se sanitiza la entrada (vulnerabilidad XSS)
-    
-    // Realizar búsqueda en la base de datos
-    $query = "SELECT * FROM products WHERE nombreProducto LIKE :search OR idProducto LIKE :search";
-    $stmt = $conn->prepare($query);
-    $searchParam = "%" . $search_get . "%";  // Búsqueda parcial
-    $stmt->bindParam(':search', $searchParam);
-    $stmt->execute();
-    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-// Procesar la búsqueda con POST (vulnerable a XSS)
-if (isset($_POST['search_post']) && $_POST['search_post'] !== "") {
-    $search_post = $_POST['search_post'];  // No se sanitiza la entrada (vulnerabilidad XSS)
-    
-    // Realizar búsqueda en la base de datos
-    $query = "SELECT * FROM products WHERE nombreProducto LIKE :search OR idProducto LIKE :search";
-    $stmt = $conn->prepare($query);
-    $searchParam = "%" . $search_post . "%";  // Búsqueda parcial
-    $stmt->bindParam(':search', $searchParam);
-    $stmt->execute();
-    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-// Limpiar búsqueda
-if (isset($_GET['clear_search'])) {
-    $search_get = "";
-    $search_post = "";
-    header("Location: " . strtok($_SERVER["REQUEST_URI"], '?')); // Redirige sin parámetros de búsqueda
-    exit;
-}
-
-// Si no hay búsqueda, cargar todos los productos
-if (empty($search_get) && empty($search_post)) {
-    $query = "SELECT * FROM products";
-    $stmt = $conn->query($query);
-    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-// Función para detectar si una cadena contiene código JavaScript
-function contiene_script($str) {
-    return (stripos($str, '<script') !== false);
-}
-
-// Verificar si hay un ataque XSS
-$xss_attack = false;
-if (contiene_script($search_get) || contiene_script($search_post)) {
-    $xss_attack = true;
-}
-?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Búsqueda de Productos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Estilos generales */
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #1a1a2e;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #e0e0e0;
             margin: 0;
             padding: 0;
             line-height: 1.6;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 2rem;
         }
 
         h1 {
             text-align: center;
-            color: #e94560;
-            font-size: 2.5rem;
-            margin-bottom: 40px;
+            color: #4CAF50;
+            font-size: 2.8rem;
+            margin-bottom: 2rem;
             font-weight: 600;
-        }
-
-        /* Formularios de búsqueda */
-        .search-form {
-            background: #16213e;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .search-form:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .search-form h2 {
-            margin-top: 0;
-            color: #e94560;
-            font-size: 1.8rem;
-            font-weight: 500;
-            margin-bottom: 20px;
-        }
-
-        .search-form input[type="text"] {
-            width: calc(100% - 140px);
-            padding: 12px;
-            border: 1px solid #0f3460;
-            border-radius: 8px;
-            font-size: 1rem;
-            color: #e0e0e0;
-            background-color: #1a1a2e;
-            transition: border-color 0.2s ease;
-        }
-
-        .search-form input[type="text"]:focus {
-            border-color: #e94560;
-            outline: none;
-        }
-
-        .search-form button {
-            padding: 12px 24px;
-            background-color: #e94560;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .search-form button:hover {
-            background-color: #c2334d;
-        }
-
-        /* Resultados de búsqueda */
-        .results {
-            background: #16213e;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-        }
-
-        .results h3 {
-            margin-top: 0;
-            color: #e94560;
-            font-size: 1.5rem;
-            font-weight: 500;
-            margin-bottom: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        table, th, td {
-            border: 1px solid #0f3460;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: center;
-        }
-
-        th {
-            background-color: #1a1a2e;
-            color: #e94560;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background-color: #0f3460;
-        }
-
-        /* Botones */
-        .btn {
-            padding: 8px 16px;
-            background-color: #e94560;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .btn:hover {
-            background-color: #c2334d;
-        }
-
-        .btn-danger {
-            background-color: #ff4c4c;
-        }
-
-        .btn-danger:hover {
-            background-color: #e63939;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         /* Barra de navegación */
         .nav-buttons {
-            text-align: center;
-            margin-bottom: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
         .nav-buttons a {
-            margin: 0 10px;
-            padding: 10px 20px;
-            background-color: #e94560;
+            padding: 0.8rem 1.5rem;
+            background-color: #4CAF50;
             color: white;
-            border-radius: 6px;
             text-decoration: none;
-            transition: background-color 0.2s ease;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .nav-buttons a:hover {
-            background-color: #c2334d;
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
         }
 
-        /* Animación de shake */
+        /* Formularios de búsqueda */
+        .search-form {
+            background: rgba(22, 33, 62, 0.8);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .search-form h2 {
+            margin-top: 0;
+            color: #4CAF50;
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-form input[type="text"] {
+            width: calc(100% - 140px);
+            padding: 1rem;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+            border-radius: 25px;
+            font-size: 1rem;
+            color: #e0e0e0;
+            background-color: rgba(26, 26, 46, 0.7);
+            transition: all 0.3s ease;
+            margin-right: 1rem;
+        }
+
+        .search-form input[type="text"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+        }
+
+        .search-form button {
+            padding: 1rem 1.5rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .search-form button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+
+        /* Resultados de búsqueda */
+        .results {
+            background: rgba(22, 33, 62, 0.8);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .results h3 {
+            color: #4CAF50;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 1.5rem;
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        th {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        tr:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        /* Mensaje de advertencia */
+        .warning {
+            text-align: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            background-color: #ff4444;
+            padding: 2rem;
+            animation: shake 0.5s infinite;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+
         @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-10px); }
-            100% { transform: translateX(10px); }
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .search-form input[type="text"] {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+
+            .search-form button {
+                width: 100%;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .nav-buttons a {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
