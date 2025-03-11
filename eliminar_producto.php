@@ -6,13 +6,18 @@ require_once 'autenticacion.php';
 // Verificar si el usuario está autenticado
 verificar_autenticacion();
 
+// Verificar el token CSRF
+if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    die('Error: Token CSRF inválido');
+}
+
 // Verificar si el ID es válido
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
     header("Location: listado_productos.php");
     exit;
 }
 
-$idProducto = $_GET['id'];
+$idProducto = $_POST['id'];
 
 try {
     // Verificar si el producto existe

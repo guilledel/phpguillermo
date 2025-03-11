@@ -6,6 +6,16 @@ require_once 'autenticacion.php'; // Verificación de autenticación
 // Verificar si el usuario está autenticado
 verificar_autenticacion();
 
+// Generar token CSRF si no existe
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Verificar el token CSRF para la petición GET
+if (!isset($_GET['csrf_token']) || $_GET['csrf_token'] !== $_SESSION['csrf_token']) {
+    die("Error: Token CSRF inválido");
+}
+
 // Obtener el ID del producto a editar
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("ID de producto no válido.");
@@ -31,6 +41,11 @@ try {
 
 // Lógica para manejar el formulario POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verificar el token CSRF para la petición POST
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("Error: Token CSRF inválido");
+    }
+
     // Obtener los datos del formulario
     $nombreProducto = trim($_POST['nombreProducto']);
     $descripcionProducto = trim($_POST['descripcionProducto']);
@@ -105,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <form method="POST">
+        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
         <label for="nombreProducto">Nombre del Producto:</label>
         <input type="text" id="nombreProducto" name="nombreProducto" value="<?php echo htmlspecialchars($producto['nombreProducto']); ?>" required>
 
