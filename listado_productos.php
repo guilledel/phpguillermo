@@ -2,10 +2,86 @@
 session_start();
 require "db.php";
 
-// Generar token CSRF si no existe
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+// Función para limpiar tokens antiguos
+function cleanOldTokens() {
+    if (isset($_SESSION['old_tokens'])) {
+        // Mantener solo los últimos 5 tokens
+        if (count($_SESSION['old_tokens']) > 5) {
+            array_shift($_SESSION['old_tokens']);
+        }
+    }
 }
+
+// Generar token para cada petición
+function generateToken() {
+    // Inicializar array de tokens antiguos si no existe
+    if (!isset($_SESSION['old_tokens'])) {
+        $_SESSION['old_tokens'] = array();
+    }
+    
+    // Guardar el token actual si existe
+    if (isset($_SESSION['token'])) {
+        $_SESSION['current_token'] = $_SESSION['token'];
+        // Guardar en el historial de tokens
+        $_SESSION['old_tokens'][] = $_SESSION['token'];
+        cleanOldTokens();
+    }
+    
+    // Siempre generar un nuevo token
+    $_SESSION['token'] = bin2hex(random_bytes(32));
+    return $_SESSION['token'];
+}
+
+// Validar token
+function validateToken($token) {
+    // Verificar si el token coincide con el actual o alguno de los últimos tokens válidos
+    $valid = false;
+    
+    if (isset($_SESSION['token']) && hash_equals($_SESSION['token'], $token)) {
+        $valid = true;
+    } elseif (isset($_SESSION['old_tokens'])) {
+        foreach ($_SESSION['old_tokens'] as $old_token) {
+            if (hash_equals($old_token, $token)) {
+                $valid = true;
+                break;
+            }
+        }
+    }
+    
+    if (!$valid) {
+        die('Error de validación del token');
+    }
+    
+    $_SESSION['current_token'] = $_SESSION['token'];
+    // Generar nuevo token después de la validación
+    $_SESSION['token'] = bin2hex(random_bytes(32));
+}
+
+// Verificar token en todas las peticiones excepto GET
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    if (!isset($_POST['token'])) {
+        die('Token no proporcionado');
+    }
+    validateToken($_POST['token']);
+}
+
+// Generar nuevo token para la siguiente petición
+$token = generateToken();
+
+// Función para obtener el token actual de forma segura
+function getCurrentToken() {
+    return isset($_SESSION['token']) ? $_SESSION['token'] : generateToken();
+}
+
+// Verificar token CSRF en solicitudes POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die('Error de validación CSRF');
+    }
+}
+
+// Generar nuevo token CSRF en cada solicitud
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
 // Inicializar variables
 $search_get = isset($_GET['search_get']) ? $_GET['search_get'] : '';
@@ -302,18 +378,21 @@ try {
             <a href="cerrarsesion.php" class="btn btn-danger">Cerrar sesión</a>
         </div>
 
-        <!-- Formulario de búsqueda con GET -->
-        <div class="search-form">
-            <h2>Búsqueda con GET</h2>
-            <form method="GET" action="">
-                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                <input type="text" name="search_get" placeholder="Buscar productos..." value="<?php echo htmlspecialchars($search_get); ?>">
-                <button type="submit">Buscar</button>
-                <?php if (!empty($search_get)): ?>
-                    <a href="?clear_search=true&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" class="btn btn-danger">Limpiar Búsqueda</a>
-                <?php endif; ?>
-            </form>
-        </div>
+        <!-- Formulario de búsqueda GET -->
+        <form method="get" class="search-form">
+            <h2>Búsqueda por GET</h2>
+            <input type="text" name="search_get" value="<?php echo htmlspecialchars($search_get); ?>" placeholder="Buscar productos...">
+            <button type="submit">Buscar</button>
+        </form>
+
+        <!-- Formulario de búsqueda POST -->
+        <form method="post" class="search-form">
+            <h2>Búsqueda por POST</h2>
+            <input type="hidden" name="token" value="<?php echo getCurrentToken(); ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+            <input type="text" name="search_post" value="<?php echo htmlspecialchars($search_post); ?>" placeholder="Buscar productos...">
+            <button type="submit">Buscar</button>
+        </form>
 
         <!-- Resultados de la búsqueda con GET -->
         <?php if (!empty($search_get)): ?>
@@ -338,9 +417,9 @@ try {
                                     <td><?php echo number_format($producto['precioProducto'], 2, ',', '.'); ?></td>
                                     <td><?php echo htmlspecialchars($producto['cantidadProducto']); ?></td>
                                     <td>
-                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>">Editar</a>
+                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&token=<?php echo getCurrentToken(); ?>">Editar</a>
                                         <form method="POST" action="eliminar_producto.php" style="display: inline;">
-                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                            <input type="hidden" name="token" value="<?php echo getCurrentToken(); ?>">
                                             <input type="hidden" name="id" value="<?php echo $producto['idProducto']; ?>">
                                             <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</button>
                                         </form>
@@ -356,19 +435,6 @@ try {
                 </table>
             </div>
         <?php endif; ?>
-
-        <!-- Formulario de búsqueda con POST -->
-        <div class="search-form">
-            <h2>Búsqueda con POST</h2>
-            <form method="POST" action="">
-                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                <input type="text" name="search_post" placeholder="Buscar productos..." value="<?php echo htmlspecialchars($search_post); ?>">
-                <button type="submit">Buscar</button>
-                <?php if (!empty($search_post)): ?>
-                    <a href="?clear_search=true&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" class="btn btn-danger">Limpiar Búsqueda</a>
-                <?php endif; ?>
-            </form>
-        </div>
 
         <!-- Resultados de la búsqueda con POST -->
         <?php if (!empty($search_post)): ?>
@@ -393,9 +459,9 @@ try {
                                     <td><?php echo number_format($producto['precioProducto'], 2, ',', '.'); ?></td>
                                     <td><?php echo htmlspecialchars($producto['cantidadProducto']); ?></td>
                                     <td>
-                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>">Editar</a>
+                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&token=<?php echo getCurrentToken(); ?>">Editar</a>
                                         <form method="POST" action="eliminar_producto.php" style="display: inline;">
-                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                            <input type="hidden" name="token" value="<?php echo getCurrentToken(); ?>">
                                             <input type="hidden" name="id" value="<?php echo $producto['idProducto']; ?>">
                                             <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</button>
                                         </form>
@@ -435,9 +501,9 @@ try {
                                     <td><?php echo number_format($producto['precioProducto'], 2, ',', '.'); ?></td>
                                     <td><?php echo htmlspecialchars($producto['cantidadProducto']); ?></td>
                                     <td>
-                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>">Editar</a>
+                                        <a class="btn" href="editar_producto.php?id=<?php echo $producto['idProducto']; ?>&token=<?php echo getCurrentToken(); ?>">Editar</a>
                                         <form method="POST" action="eliminar_producto.php" style="display: inline;">
-                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                            <input type="hidden" name="token" value="<?php echo getCurrentToken(); ?>">
                                             <input type="hidden" name="id" value="<?php echo $producto['idProducto']; ?>">
                                             <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');">Eliminar</button>
                                         </form>
